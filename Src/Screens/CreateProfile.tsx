@@ -106,6 +106,7 @@ const CreateProfile = ({ route }) => {
       image: imageUrl,
       createdAt: existingProfile?.createdAt || new Date().toISOString(),
       isAdmin: existingProfile?.isAdmin || false, // Default to false if not set
+      
     };
 
     dispatch(setProfile(profile));

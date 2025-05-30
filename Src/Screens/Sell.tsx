@@ -96,6 +96,14 @@ const handleSubmit = async () => {
       Alert.alert('Error', 'Please add at least one image');
       return;
     }
+     if (!value) {
+    Alert.alert('Error', 'Please select a category');
+    return;
+  }
+  if (!gender) {
+    Alert.alert('Error', 'Please select gender');
+    return;
+  }
     const uploadedImageUrls = [];
     for (let i = 0; i < selectedImages.length; i++) {
       const url = await uploadImageToCloudinary(selectedImages[i]);
@@ -107,14 +115,11 @@ const handleSubmit = async () => {
       Alert.alert('Error', 'Failed to upload images');
       return;
     }
+    
   
 
 
- await firestore()
-  .collection('animalListings')
-  .doc(profile.name) // User-based document
-  .collection('AdsList') // Ads subcollection
-  .add({
+ await firestore().collection('animalListings').add({
       images: uploadedImageUrls,
       category: value,
       gender,
@@ -128,8 +133,15 @@ const handleSubmit = async () => {
       createdAt: firestore.FieldValue.serverTimestamp(),
       ownerName: profile.name || 'No Name',
       ownerId: profile.phone || 'No ID',
-     ownerImage: profile.image || '',
+      ownerImage: profile.image || '', 
       // ownerId: profile.id,
+       likes: 0,
+  dislikes: 0,
+  likedUsers: [],
+  dislikedUsers: [],
+  reactions: {},
+  
+      
    
     });
 

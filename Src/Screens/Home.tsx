@@ -10,47 +10,143 @@ import { AppDataContext } from '../context/AppDataContext';
 const Home = () => {
   const { appTheme } = useContext(AppDataContext);
   const navigation = useNavigation<any>();
-  const [showAllLikes, setShowAllLikes] = useState(false);
-  const [showAllDislikes, setShowAllDislikes] = useState(false);
-  const [selectedAd, setSelectedAd] = useState<any>(null);
+  const [listings, setListings] = useState([]);
   const profile = useSelector((state: RootState) => state.profile);
-  const [ads, setAds] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const userId = profile.id || profile.phone || profile.uid || null;
-
+  const [ads, setAds] = useState([]);
+  const [activeModal, setActiveModal] = useState<{
+  postId: string | null;
+  type: 'likes' | 'dislikes' | null;
+}>({ postId: null, type: null });
   useEffect(() => {
-    setLoading(true);
     const unsubscribe = firestore()
-      .collectionGroup('AdsList')
+      .collection('animalListings')
       .orderBy('createdAt', 'desc')
-      .onSnapshot(
-        (querySnapshot) => {
-          const allAds = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            userId: doc.ref.parent.parent?.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
-          }));
-          
-          console.log('Ads updated:', allAds.length);
-          setAds(allAds);
-          setLoading(false);
-        }, 
-        (error) => {
-          console.error('Error in real-time listener:', error);
-          setLoading(false);
-        }
-      );
+      .onSnapshot(snapshot => {
+        const adsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAds(adsData);
+      });
 
     return () => unsubscribe();
   }, []);
 
-  const formatDate = (date: Date) => {
-    const day = date.getDate();
-    const month = date.toLocaleString('default', { month: 'long' });
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
+const formatDate = (date: Date) => {
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  const months = Math.floor(diffInDays / 30);
+  const remainingDays = diffInDays % 30;
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  if (diffInSeconds < 60) {
+    return 'Just now';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
+  } else if (diffInDays < 30) {
+    return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+  } else if (months < 12) {
+    return `${months} month${months !== 1 ? 's' : ''}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays !== 1 ? 's' : ''}` : ''} ago`;
+  } else {
+    return `${years} year${years !== 1 ? 's' : ''}${remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}` : ''}${remainingDays > 0 ? ` ${remainingDays} day${remainingDays !== 1 ? 's' : ''}` : ''} ago`;
+  }
+};
+
+
+
+  const handleLike = async (id: string) => {
+    const userId = profile.id;
+    const userName = profile.name;
+    const docRef = firestore().collection('animalListings').doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) return;
+    const data = doc.data();
+    const currentReaction = data?.reactions?.[userId];
+
+    const updates: any = {};
+
+    if (currentReaction === 'like') {
+      updates.likes = firestore.FieldValue.increment(-1);
+      updates[`reactions.${userId}`] = firestore.FieldValue.delete();
+      updates.likedUsers = firestore.FieldValue.arrayRemove(userName);
+    } else {
+      if (currentReaction === 'dislike') {
+        updates.dislikes = firestore.FieldValue.increment(-1);
+        updates.dislikedUsers = firestore.FieldValue.arrayRemove(userName);
+      }
+
+      updates.likes = firestore.FieldValue.increment(1);
+      updates[`reactions.${userId}`] = 'like';
+      updates.likedUsers = firestore.FieldValue.arrayUnion(userName);
+    }
+
+    await docRef.update(updates);
+  };
+
+  const handleDislike = async (id: string) => {
+    const userId = profile.id;
+    const userName = profile.name;
+    const docRef = firestore().collection('animalListings').doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) return;
+    const data = doc.data();
+    const currentReaction = data?.reactions?.[userId];
+
+    const updates: any = {};
+
+    if (currentReaction === 'dislike') {
+      updates.dislikes = firestore.FieldValue.increment(-1);
+      updates[`reactions.${userId}`] = firestore.FieldValue.delete();
+      updates.dislikedUsers = firestore.FieldValue.arrayRemove(userName);
+    } else {
+      if (currentReaction === 'like') {
+        updates.likes = firestore.FieldValue.increment(-1);
+        updates.likedUsers = firestore.FieldValue.arrayRemove(userName);
+      }
+
+      updates.dislikes = firestore.FieldValue.increment(1);
+      updates[`reactions.${userId}`] = 'dislike';
+      updates.dislikedUsers = firestore.FieldValue.arrayUnion(userName);
+    }
+
+    await docRef.update(updates);
+  };
+
+  const deleteListing = async (id: string, ownerId: string) => {
+    if (profile.phone !== ownerId && !profile.isAdmin) {
+      // Alert.alert("Permission Denied", "You can only delete your own listings.");
+      return;
+    }
+    Alert.alert(
+      "Delete Listing",
+      "Are you sure you want to delete this listing?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await firestore().collection('animalListings').doc(id).delete();
+              setListings(listings.filter(item => item.id !== id));
+              Alert.alert("Success", "Listing deleted!");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete listing.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const updateUserProfileImageInListings = async (userId: string, newImageUrl: string) => {
@@ -77,183 +173,23 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (profile.id && profile.image) {
-      updateUserProfileImageInListings(profile.id, profile.image);
+    if (profile.phone && profile.image) {
+      updateUserProfileImageInListings(profile.phone, profile.image);
     }
-  }, [profile.id, profile.image]);
-
-  const handleLike = async (adId: string, ownerDocId: string) => {
-    if (!profile?.id || !profile?.name) return;
-
-    const userId = profile.id;
-    const userName = profile.name;
-
-    const docRef = firestore()
-      .collection('animalListings')
-      .doc(ownerDocId)
-      .collection('AdsList')
-      .doc(adId);
-
-    try {
-      const doc = await docRef.get();
-      if (!doc.exists) return;
-
-      const data = doc.data();
-      const currentReaction = data?.reactions?.[userId];
-      const updates: any = {};
-
-      if (currentReaction === 'like') return;
-
-      // Optimistic update
-      setAds(prevAds => prevAds.map(ad => {
-        if (ad.id === adId) {
-          const updatedAd = {...ad};
-          
-          if (currentReaction === 'dislike') {
-            updatedAd.dislikes = (updatedAd.dislikes || 0) - 1;
-            updatedAd.dislikedUsers = (updatedAd.dislikedUsers || []).filter((u: string) => u !== userName);
-          }
-
-          updatedAd.likes = (updatedAd.likes || 0) + 1;
-          updatedAd.reactions = {...updatedAd.reactions, [userId]: 'like'};
-          updatedAd.likedUsers = [...(updatedAd.likedUsers || []).filter((u: string) => u !== userName), userName];
-          
-          return updatedAd;
-        }
-        return ad;
-      }));
-
-      // Then perform the actual update
-      if (currentReaction === 'dislike') {
-        updates.dislikes = firestore.FieldValue.increment(-1);
-        updates.dislikedUsers = (data?.dislikedUsers || []).filter((u: string) => u !== userName);
-      }
-
-      updates.likes = firestore.FieldValue.increment(1);
-      updates[`reactions.${userId}`] = 'like';
-      updates.likedUsers = [...(data?.likedUsers || []).filter((u: string) => u !== userName), userName];
-
-      await docRef.update(updates);
-    } catch (error) {
-      console.error('Error in like:', error);
-      // Revert optimistic update if there's an error
-      setAds(ads);
-    }
-  };
-
-  const handleDislike = async (adId: string, ownerDocId: string) => {
-    if (!profile?.id || !profile?.name) return;
-
-    const userId = profile.id;
-    const userName = profile.name;
-
-    const docRef = firestore()
-      .collection('animalListings')
-      .doc(ownerDocId)
-      .collection('AdsList')
-      .doc(adId);
-
-    try {
-      const doc = await docRef.get();
-      if (!doc.exists) return;
-
-      const data = doc.data();
-      const currentReaction = data?.reactions?.[userId];
-      const updates: any = {};
-
-      if (currentReaction === 'dislike') return;
-
-      // Optimistic update
-      setAds(prevAds => prevAds.map(ad => {
-        if (ad.id === adId) {
-          const updatedAd = {...ad};
-          
-          if (currentReaction === 'like') {
-            updatedAd.likes = (updatedAd.likes || 0) - 1;
-            updatedAd.likedUsers = (updatedAd.likedUsers || []).filter((u: string) => u !== userName);
-          }
-
-          updatedAd.dislikes = (updatedAd.dislikes || 0) + 1;
-          updatedAd.reactions = {...updatedAd.reactions, [userId]: 'dislike'};
-          updatedAd.dislikedUsers = [...(updatedAd.dislikedUsers || []).filter((u: string) => u !== userName), userName];
-          
-          return updatedAd;
-        }
-        return ad;
-      }));
-
-      // Then perform the actual update
-      if (currentReaction === 'like') {
-        updates.likes = firestore.FieldValue.increment(-1);
-        updates.likedUsers = (data?.likedUsers || []).filter((u: string) => u !== userName);
-      }
-
-      updates.dislikes = firestore.FieldValue.increment(1);
-      updates[`reactions.${userId}`] = 'dislike';
-      updates.dislikedUsers = [...(data?.dislikedUsers || []).filter((u: string) => u !== userName), userName];
-
-      await docRef.update(updates);
-    } catch (error) {
-      console.error('Error in dislike:', error);
-      // Revert optimistic update if there's an error
-      setAds(ads);
-    }
-  };
-
-  const deleteListing = async (adId: string, ownerDocId: string) => {
-    if (userId !== ownerDocId && !profile.isAdmin) {
-      Alert.alert("Error", "You don't have permission to delete this listing");
-      return;
-    }
-
-    Alert.alert(
-      "Delete Listing",
-      "Are you sure you want to delete this listing?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Optimistic update - remove from state immediately
-              setAds(prevAds => prevAds.filter(ad => ad.id !== adId));
-              
-              // Then perform the actual delete operation
-              const adToDelete = ads.find(ad => ad.id === adId);
-              if (!adToDelete) return;
-
-              await firestore()
-                .collection('animalListings')
-                .doc(adToDelete.userId)
-                .collection('AdsList')
-                .doc(adId)
-                .delete();
-
-              // The real-time listener will handle the confirmation
-            } catch (error) {
-              // Revert if there's an error
-              setAds(ads); // Reset to previous state
-              console.error('Delete error:', error);
-              Alert.alert("Error", "Failed to delete listing");
-            }
-          }
-        }
-      ]
-    );
-  };
+  }, [profile.phone, profile.image]);
 
   const renderListingCard = ({ item }: any) => {
     const isMyAd = item.ownerId === profile.phone;
     const displayName = isMyAd ? profile.name : item.ownerName;
     const displayId = isMyAd ? profile.phone : item.ownerId;
-    
+ 
+
     return (
       <View style={styles.topcontainer}>
         <View style={styles.userProfileSection}>
           {item.ownerImage ? (
             <Image
-              source={{ uri: item.ownerId === profile.phone ? profile.image : item.ownerImage }}
+              source={{ uri: item.ownerImage }}
               style={styles.profileImage}
               resizeMode="cover"
             />
@@ -264,13 +200,12 @@ const Home = () => {
           )}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{displayName || 'Unknown'}</Text>
-            {item.createdAt && (
-              <Text style={styles.userDate}>
-                {`${item.createdAt.toLocaleTimeString()}\n${formatDate(item.createdAt)}`}
-              </Text>
-            )}
+           {item.createdAt && (
+  <Text style={styles.userDate}>
+    {formatDate(item.createdAt.toDate())}
+  </Text>
+)}
           </View>
-
           <TouchableOpacity style={{ marginBottom: 15 }} onPress={() => deleteListing(item.id, displayId)}>
             <Icon name="more-vert" size={35} color="#000" />
           </TouchableOpacity>
@@ -298,11 +233,10 @@ const Home = () => {
                 )}
               </>
             )}
-
             <View style={styles.container}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 {item.likedUsers?.length > 0 && (
-                  <TouchableOpacity onPress={() => setShowAllLikes(true)} style={{ flex: 1 }}>
+                  <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'likes' })} >
                     <Text style={{ fontWeight: 'bold', color: 'green' }}>
                       {item.likedUsers.length === 1
                         ? item.likedUsers[0]
@@ -312,7 +246,7 @@ const Home = () => {
                 )}
 
                 {item.dislikedUsers?.length > 0 && (
-                  <TouchableOpacity onPress={() => setShowAllDislikes(true)} style={{ flex: 1, alignItems: 'flex-end' }}>
+                  <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'dislikes' })} style={{ flex: 1, alignItems: 'flex-end' }}>
                     <Text style={{ fontWeight: 'bold', color: 'red', textAlign: 'right' }}>
                       {item.dislikedUsers.length === 1
                         ? item.dislikedUsers[0]
@@ -323,14 +257,14 @@ const Home = () => {
               </View>
 
               <Modal
-                visible={showAllLikes}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowAllLikes(false)}
-              >
+          visible={activeModal.postId === item.id && activeModal.type === 'likes'}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setActiveModal({ postId: null, type: null })}
+        >
                 <View style={styles.modalContainer}>
                   <View style={styles.modalContent}>
-                    <TouchableOpacity onPress={() => setShowAllLikes(false)} style={styles.removeButton}>
+                    <TouchableOpacity  onPress={() => setActiveModal({ postId: null, type: null })}style={styles.removeButton} >
                       <Text style={styles.removeButtonText}>✖</Text>
                     </TouchableOpacity>
                     <Text style={styles.modalTitle}>Liked by</Text>
@@ -344,14 +278,14 @@ const Home = () => {
               </Modal>
 
               <Modal
-                visible={showAllDislikes}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowAllDislikes(false)}
-              >
+          visible={activeModal.postId === item.id && activeModal.type === 'dislikes'}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setActiveModal({ postId: null, type: null })}
+        >
                 <View style={styles.modalContainer}>
                   <View style={styles.modalContent}>
-                    <TouchableOpacity onPress={() => setShowAllDislikes(false)} style={styles.removeButton}>
+                    <TouchableOpacity onPress={() => setActiveModal({ postId: null, type: null })}  style={styles.removeButton}>
                       <Text style={styles.removeButtonText}>✖</Text>
                     </TouchableOpacity>
                     <Text style={styles.modalTitle}>Disliked by</Text>
@@ -366,11 +300,11 @@ const Home = () => {
             </View>
 
             <View style={styles.reactionContainer}>
-              <TouchableOpacity onPress={() => handleLike(item.id, item.userId)}>
-                <Text style={styles.reactionText}>👍 {item.likes || 0}</Text>
+              <TouchableOpacity onPress={() => handleLike(item.id)}>
+                <Text style={styles.reactionText}>👍 {item.likedUsers.length || 0}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleDislike(item.id, item.userId)}>
-                <Text style={styles.reactionText}>👎 {item.dislikes || 0}</Text>
+              <TouchableOpacity onPress={() => handleDislike(item.id)}>
+                <Text style={styles.reactionText}>👎 {item.dislikedUsers.length || 0}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -410,7 +344,7 @@ const Home = () => {
         padding: 10
       },
       profileCard: {
-        paddingHorizontal: 5,
+        paddingHorizontal: 10,
         borderRadius: 5,
         backgroundColor: '#f0f0f0',
         elevation: 4,
@@ -473,29 +407,6 @@ const Home = () => {
         borderRadius: 30,
         marginRight: 15,
       },
-      imageRowContainer: {
-        flexDirection: 'row',
-        marginTop: 1,
-      },
-      bigImage: {
-        width: 215,
-        height: 220,
-        borderRadius: 8,
-        resizeMode: 'cover',
-      },
-      thumbnailsContainer: {
-        flex: 1,
-        flexDirection: 'column', 
-        justifyContent: 'space-between',
-        marginLeft: 5,
-      },
-      thumbnailImage: {
-        width: 110,
-        height: 70,
-        borderRadius: 8,
-        resizeMode: 'cover',
-        marginBottom: 5,
-      }, 
       modalContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -536,31 +447,43 @@ const Home = () => {
         fontSize: 16,
         marginVertical: 5,
       },
+      imageRowContainer: {
+        flexDirection: 'row',
+        marginTop: 1,
+      },
+      bigImage: {
+        width: 215,
+        height: 220,
+        borderRadius: 8,
+        resizeMode: 'cover',
+      },
+      thumbnailsContainer: {
+        flex: 1,
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        marginLeft: 5,
+      },
+      thumbnailImage: {
+        width: 110,
+        height: 70,
+        borderRadius: 8,
+        resizeMode: 'cover',
+        marginBottom: 5,
+      },
     });
-  }, [appTheme]);
+  }, [appTheme])
 
   return (
     <View style={styles.container}>
       <View style={styles.containers}>
         <Text style={styles.heading}>Welcome {profile.name || ''}</Text>
       </View>
-      {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>Loading ads...</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={ads}
-          renderItem={renderListingCard}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ListEmptyComponent={
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
-              <Text>No ads available</Text>
-            </View>
-          }
-        />
-      )}
+      <FlatList
+        data={ads}
+        renderItem={renderListingCard}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 };
