@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useContext, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useSelector } from 'react-redux';
+import { AppDataContext } from '../context/AppDataContext';
 
 const SplashScreen = ({ navigation }) => {
   const profile = useSelector(state => state.profile);
-
+const {appTheme}=useContext(AppDataContext);
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (profile.name) {
@@ -12,22 +13,46 @@ const SplashScreen = ({ navigation }) => {
       } else {
         navigation.replace('ProfileScreen');
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, [profile]);
+  const styles = useMemo(()=>{
+    return StyleSheet.create({
+  container: { flex: 1,
+     backgroundColor: '#fff',
+     },
+  titles: {
+    backgroundColor:appTheme.Primary,
+  
+  },
+  title: {
+      fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+     marginBottom:10,
+    textAlign: 'center',
+    paddingVertical:15
+     },
+    
+})
+}, []);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Pakistan Animals</Text>
-      <ActivityIndicator size="large" color="#0000ff" />
+   <View style={styles.titles}>
+    <Text style={styles.title}>Pak Animals</Text>
+</View>
+<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Image source={require('../images/image1.jpg')} 
+      style={{ width:'100%', height:'100%' }}
+        />
+</View>
+     
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-});
+
 
 export default SplashScreen;

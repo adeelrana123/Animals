@@ -7,6 +7,7 @@ import firestore from '@react-native-firebase/firestore';
 import { setProfile } from '../redux/profileSlice'; // apne path ke hisaab se adjust karein
 import { Header } from '../components';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import getOrCreateUserId from '../untils/getOrCreateUserId';
 const CreateProfile = ({ route }) => {
   const navigation = useNavigation();
   const { profileData } = route.params || {};
@@ -65,18 +66,18 @@ const CreateProfile = ({ route }) => {
   }
 };
 
-  const saveProfileToFirestore = async (profile) => {
-    try {
+ const saveProfileToFirestore = async (userId, profile) => {
+  try {
+    await firestore()
+      .collection('profiles')
+      .doc(userId) // ✅ Save using userId
+      .set(profile);
+    console.log('Profile saved to Firestore');
+  } catch (error) {
+    console.log('Firestore save error:', error);
+  }
+};
 
-      await firestore()
-        .collection('profiles')
-        .doc('profileDoc')
-        .set(profile);
-      console.log('Profile saved to Firestore');
-    } catch (error) {
-      console.log('Firestore save error:', error);
-    }
-  };
 
  const handleSaveProfile = async () => {
   if (!name || !phone || !location) {
@@ -98,9 +99,10 @@ const CreateProfile = ({ route }) => {
       return; // Stop saving if upload fails
     }
   }
-
+const userId = await getOrCreateUserId(); 
     const profile = {
       name,
+       id: userId, // ✅ Save it in profile object
       phone,
       location,
       image: imageUrl,
@@ -110,7 +112,7 @@ const CreateProfile = ({ route }) => {
     };
 
     dispatch(setProfile(profile));
-    await saveProfileToFirestore(profile);
+    await saveProfileToFirestore(userId, profile); // ✅ Pass it
 
     Alert.alert('Success', isEditing ? 'Profile updated successfully!' : 'Profile saved successfully!');
     navigation.goBack();

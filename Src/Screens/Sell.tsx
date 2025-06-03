@@ -7,10 +7,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setProfile } from '../redux';
 import { AppDataContext } from '../context/AppDataContext';
 import { useNavigation } from '@react-navigation/native';
-import uuid from 'react-native-uuid';
-uuid.v4();
+
 const Sell = () => {
-  const ownerId = uuid.v4();
   const navigation = useNavigation();
     const {appTheme}=useContext(AppDataContext);
  const [images, setImages] = useState(Array(4).fill(null)); 
@@ -132,7 +130,8 @@ const handleSubmit = async () => {
       message,
       createdAt: firestore.FieldValue.serverTimestamp(),
       ownerName: profile.name || 'No Name',
-      ownerId: profile.phone || 'No ID',
+      // ownerId: profile.phone || 'No ID',
+      ownerId: profile.id || 'No ID',
       ownerImage: profile.image || '', 
       // ownerId: profile.id,
        likes: 0,

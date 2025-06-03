@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Image } from 'react-native';
 import DefaultProfile from '../images/person.jpg';
 interface ProfileState {
+   id?: string;
   name: string;
   phone: string;
   location: string;
@@ -15,6 +16,7 @@ interface ProfileState {
 const defaultImageUri = Image.resolveAssetSource(DefaultProfile).uri;
 
 const initialState: ProfileState = {
+   id: undefined,
   name: '',
   phone: '',
   image: null,

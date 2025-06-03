@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { setProfile } from '../redux/profileSlice';
+import uuid from 'react-native-uuid';
 
 export default function ProfileScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -10,23 +11,41 @@ export default function ProfileScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const dispatch = useDispatch();
 
+  const getOrCreateUserId = async () => {
+    let userId = await AsyncStorage.getItem('userId');
+    if (!userId) {
+      userId = uuid.v4();
+      await AsyncStorage.setItem('userId', userId);
+    }
+    return userId;
+  };
+
   const saveProfile = async () => {
-    if (name && location && phone) {
-      const profile = { name, location, phone };
+     if (name && location && phone) {
+    const userId = await getOrCreateUserId();  
+      // Alert.alert('Generated User ID', userId);
+    const profile = { id: userId, name, location, phone };
 
-      // 1. Save in AsyncStorage
-      await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-      await AsyncStorage.setItem('isProfileCreated', 'true');
-
-      // 2. Save in Redux store
-      dispatch(setProfile(profile));
-
-      // 3. Navigate to Home
-      navigation.replace('Home');
+      try {
+        await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
+        await AsyncStorage.setItem('isProfileCreated', 'true');
+        dispatch(setProfile(profile));
+        navigation.replace('Home');
+      } catch (error) {
+        Alert.alert('Error', 'Failed to save profile');
+      }
     } else {
       alert('Please fill all fields.');
     }
   };
+  useEffect(() => {
+  const showId = async () => {
+    const userId = await AsyncStorage.getItem('userId');
+    console.log('Stored ID:', userId);
+  };
+  showId();
+}, []);
+
 
   return (
     <View style={styles.container}>

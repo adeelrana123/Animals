@@ -17,7 +17,7 @@ const BottomTabs = () => {
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Home') iconName = 'home-outline';
-          else if (route.name === 'Search') iconName = 'search-outline';
+          // else if (route.name === 'Search') iconName = 'search-outline';
           else if (route.name === 'Sell') iconName = 'add-circle-outline';
           else if (route.name === 'Profile') iconName = 'person-outline';
           return <Icon name={iconName} size={size} color={color} />;
@@ -28,7 +28,7 @@ const BottomTabs = () => {
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Search" component={Search} />
+      {/* <Tab.Screen name="Search" component={Search} /> */}
       <Tab.Screen name="Sell" component={Sell} />
       <Tab.Screen name="Profile" component={profile} />
     </Tab.Navigator>
