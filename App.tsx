@@ -9,6 +9,7 @@ import CreateProfile from './Src/Screens/CreateProfile';
 import { persistor, store } from './Src/redux';
 import Detaile from './Src/components/Detaile';
 import ProfileScreen from './Src/components/ProfileScreen';
+import UserAdsScreen from './Src/Screens/UserAdsScreen';
 
 const Stack = createStackNavigator();
 
@@ -24,6 +25,7 @@ export default function App() {
             <Stack.Screen name="Listings" component={Listings} />
             <Stack.Screen name="Detaile" component={Detaile} />
              <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+             <Stack.Screen name="UserAds" component={UserAdsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </PersistGate>

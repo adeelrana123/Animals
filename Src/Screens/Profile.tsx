@@ -22,7 +22,7 @@ const styles = useMemo(()=>{
     return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor:appTheme.Background,
   },
   containers: {
      backgroundColor:appTheme.Primary,
@@ -49,7 +49,7 @@ const styles = useMemo(()=>{
   profileName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color:appTheme.TextPrimary,
   },
   detailsContainer: {
     marginBottom: 30,
@@ -63,11 +63,11 @@ const styles = useMemo(()=>{
     fontWeight: 'bold',
     width: 100,
     fontSize: 16,
-    color: '#555',
+   color:appTheme.TextPrimary,
   },
   detailValue: {
     fontSize: 16,
-    color: '#333',
+    color:appTheme.TextPrimary,
     flex: 1,
   },
   editButton: {
@@ -89,7 +89,7 @@ const styles = useMemo(()=>{
   emptyText: {
     fontSize: 18,
     marginBottom: 20,
-    color: '#888',
+   color:appTheme.TextPrimary,
   },
   createButton: {
     backgroundColor: '#2196F3',
@@ -124,7 +124,7 @@ userProfileImage: {
   return (
     <View style={styles.container}>
       <View style={styles.containers}>
-        <Text style={styles.heading}>Profile</Text>
+        <Text style={styles.heading}> My Profile</Text>
       </View>
       <View style={styles.topcontainer}>
       {hasProfileData ? (
@@ -137,7 +137,6 @@ userProfileImage: {
                 resizeMode="cover"
                 onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
               />
-             
             ) : (
               <View style={[styles.profileImage, styles.emptyProfileImage]}>
                           <Icon name="person" size={80} color="#777" />

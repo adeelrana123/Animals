@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { setProfile } from '../redux';
 import { AppDataContext } from '../context/AppDataContext';
 import { useNavigation } from '@react-navigation/native';
-
+import AntDesign from 'react-native-vector-icons/AntDesign'
 const Sell = () => {
   const navigation = useNavigation();
     const {appTheme}=useContext(AppDataContext);
@@ -133,6 +133,8 @@ const handleSubmit = async () => {
       // ownerId: profile.phone || 'No ID',
       ownerId: profile.id || 'No ID',
       ownerImage: profile.image || '', 
+      ownerPhone: profile.phone || 'No Phone',
+
       // ownerId: profile.id,
        likes: 0,
   dislikes: 0,
@@ -175,7 +177,7 @@ const handleSubmit = async () => {
     return StyleSheet.create({
   topcontainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor:appTheme.Background,
   },
   container: {
    padding:20
@@ -206,7 +208,7 @@ const handleSubmit = async () => {
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor:appTheme.Background,
   },
   imagePreview: {
     width: '100%',
@@ -214,7 +216,7 @@ const handleSubmit = async () => {
     borderRadius: 8,
   },
   imagePlaceholder: {
-    color: '#888',
+    color:appTheme.TextPrimary,
   },
 
   header: {
@@ -222,24 +224,24 @@ const handleSubmit = async () => {
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
-    color: '#333',
+    color:appTheme.TextPrimary,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 10,
-    color: '#444',
+    color:appTheme.TextPrimary,
   },
   mediaButton: {
     height: 150,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
-    backgroundColor: '#f9f9f9',
+    backgroundColor:appTheme.Background,
   },
   mediaPreview: {
     width: '100%',
@@ -247,19 +249,19 @@ const handleSubmit = async () => {
     borderRadius: 8,
   },
   mediaPlaceholder: {
-    color: '#888',
+    color:appTheme.TextPrimary,
   },
   label: {
     marginBottom: 5,
-    color: '#555',
+    color:appTheme.TextPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
-    backgroundColor: '#fff',
+     backgroundColor:appTheme.Background,
   },
   messageInput: {
     height: 100,
@@ -267,7 +269,7 @@ const handleSubmit = async () => {
   },
   pickerContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
     borderRadius: 5,
     marginBottom: 15,
     overflow: 'hidden',
@@ -275,7 +277,7 @@ const handleSubmit = async () => {
   picker: {
     width: '100%',
     height: 50,
-    backgroundColor: '#fff',
+    backgroundColor:appTheme.Background,
   },
   radioContainer: {
     flexDirection: 'row',
@@ -284,16 +286,16 @@ const handleSubmit = async () => {
   radioButton: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
     padding: 10,
     marginRight: 10,
     borderRadius: 5,
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
+    backgroundColor:appTheme.Background,
   },
   radioSelected: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#2196f3',
+    backgroundColor:appTheme.Primary,
+    borderColor:appTheme.TextPrimary,
   },
   submitButton: {
     backgroundColor: '#4CAF50',
@@ -311,12 +313,15 @@ const handleSubmit = async () => {
   },
   dropdown: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
     borderRadius: 5,
+    backgroundColor: appTheme.Background,
   },
   dropdownContainer: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor:appTheme.TextPrimary,
+    color: appTheme.TextPrimary,
+    backgroundColor: appTheme.Background,
   },
   removeButton: {
   position: 'absolute',
@@ -375,7 +380,7 @@ removeButtonText: {
 </View>
       <Text style={styles.sectionTitle}>Ads Details</Text>
 <Text style={styles.label}>Category</Text>
-<View style={{ marginBottom: open ? 220 : 20 }}>
+<View style={{ marginBottom: open ? 220 : 20,backgroundColor:appTheme.Background }}>
   <DropDownPicker
     open={open}
     value={value}
@@ -384,6 +389,7 @@ removeButtonText: {
     setValue={setValue}
     setItems={setItems}
     placeholder="Select Animal Category"
+    placeholderStyle={{ color: appTheme.TextPrimary }}
     style={styles.dropdown}
     dropDownContainerStyle={[
       styles.dropdownContainer,
@@ -395,6 +401,13 @@ removeButtonText: {
     }}
     zIndex={1000}
     zIndexInverse={1000}
+     
+  //    ArrowDownIconComponent={({ style }) => (
+  //   <AntDesign name="down" size={20} style={style} color="black" />
+  // )}
+  // ArrowUpIconComponent={({ style }) => (
+  //   <AntDesign name="up" size={20} style={style} color="black" />
+  // )}
   />
 </View>
       <Text style={styles.label}>Gender</Text>
@@ -419,6 +432,7 @@ removeButtonText: {
         onChangeText={setAge}
         keyboardType="numeric"
         placeholder="Enter age"
+        placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Weight (kg)</Text>
@@ -428,6 +442,7 @@ removeButtonText: {
         onChangeText={setWeight}
         keyboardType="numeric"
         placeholder="Enter weight"
+          placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Price (PKR)</Text>
@@ -437,6 +452,7 @@ removeButtonText: {
         onChangeText={setPrice}
         keyboardType="numeric"
         placeholder="Enter price"
+          placeholderTextColor={appTheme.TextPrimary}
       />
       <Text style={styles.label}>Message</Text>
       <TextInput
@@ -446,6 +462,7 @@ removeButtonText: {
         placeholder="Add any additional information"
         multiline
         numberOfLines={4}
+          placeholderTextColor={appTheme.TextPrimary}
       />
       <Text style={styles.sectionTitle}>Contact Information</Text>
       
@@ -455,6 +472,7 @@ removeButtonText: {
         value={name}
         onChangeText={onNameChange}
         placeholder="Enter your name"
+          placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Address (City)</Text>
@@ -463,6 +481,7 @@ removeButtonText: {
         value={location}
         onChangeText={onLocationChange}
         placeholder="Enter your location"
+          placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Phone Number</Text>
@@ -472,6 +491,7 @@ removeButtonText: {
         onChangeText={onPhoneChange}
         keyboardType="phone-pad"
         placeholder="Enter phone number"
+          placeholderTextColor={appTheme.TextPrimary}
       />
  </ScrollView>
       <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>

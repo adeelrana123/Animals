@@ -1,13 +1,13 @@
 import React, { useState, createContext, useEffect, useMemo } from 'react';
 import { Appearance } from 'react-native';
-import { theme } from '../enums/StyleGuide';
 import { getStoredStringValue } from '../untils';
+import { theme } from '../objects';
 
 const AUTO_THEME_MODE = '0';
 const LIGHT_THEME_MODE = '1';
 const DARK_THEME_MODE = '2';
 interface AppDataContextType {
-  appTheme: any; // You can specify a more specific type here if possible
+  appTheme: any; 
   activeThemeMode: string;
   setActiveThemeMode: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -25,6 +25,7 @@ const AppDataProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     getStoredStringValue('@ThemeState', setActiveThemeMode, AUTO_THEME_MODE)
   }, [])
+  
 
   useEffect(() => {
     if (activeThemeMode === AUTO_THEME_MODE) {

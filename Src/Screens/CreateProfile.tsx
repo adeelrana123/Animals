@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { View, TextInput, Button, Image, Alert, Text, TouchableOpacity,StyleSheet, ScrollView } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,7 +8,9 @@ import { setProfile } from '../redux/profileSlice'; // apne path ke hisaab se ad
 import { Header } from '../components';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import getOrCreateUserId from '../untils/getOrCreateUserId';
+import { AppDataContext } from '../context/AppDataContext';
 const CreateProfile = ({ route }) => {
+  const {appTheme}=useContext(AppDataContext);
   const navigation = useNavigation();
   const { profileData } = route.params || {};
   const existingProfile = useSelector(state => state.profile);
@@ -117,11 +119,88 @@ const userId = await getOrCreateUserId();
     Alert.alert('Success', isEditing ? 'Profile updated successfully!' : 'Profile saved successfully!');
     navigation.goBack();
   };
+   const styles = useMemo(()=>{
+    return StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor:appTheme.Background,
+  },
+  content: {
+    padding: 20,
+  },
+  imageContainer: {
+    alignSelf: 'center',
+    marginBottom: 30,
+  },
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 2,
+    borderColor: '#ddd',
+  },
+  imagePlaceholder: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor:appTheme.TextPrimary,
+  },
+  placeholderText: {
+    color:appTheme.TextPrimary,
+  },
+  label: {
+    marginBottom: 8,
+    fontWeight: '700',
+    color:appTheme.TextPrimary,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor:appTheme.TextPrimary,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    fontSize: 16,
+    backgroundColor:appTheme.Background,
+    color:appTheme.TextPrimary,
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    // marginTop: 20,
+    marginHorizontal:20,
+    marginBottom:20
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+   editIcon: {
+    position: 'absolute',
+    bottom: 30,
+    right: -6,
+    backgroundColor: '#4CAF50',
+    borderRadius: 20,
+    padding: 8,
+  },
+  imageWrapper: {
+  alignSelf: 'center',
+  marginBottom: 30,
+  position: 'relative',
+},
+   });
+  },[appTheme])
 
 
   return (
     <View style={styles.container}>
-      <Header title={isEditing ? 'Edit Profile' : 'Create Profile'} />
+      <Header title={isEditing ? 'Edit My Profile' : 'Create Profile'} />
       
     
 <ScrollView contentContainerStyle={styles.content}>
@@ -151,6 +230,7 @@ const userId = await getOrCreateUserId();
           value={name}
           onChangeText={setName}
           placeholder="Your Name"
+          placeholderTextColor={appTheme.TextPrimary}
         />
 
         <Text style={styles.label}>Phone Number</Text>
@@ -160,6 +240,7 @@ const userId = await getOrCreateUserId();
           onChangeText={setPhone}
           keyboardType="phone-pad"
           placeholder="03001234567"
+          placeholderTextColor={appTheme.TextPrimary}
         />
 
         <Text style={styles.label}>Address</Text>
@@ -168,6 +249,7 @@ const userId = await getOrCreateUserId();
           value={location}
           onChangeText={setLocation}
           placeholder="Lahore, Pakistan"
+          placeholderTextColor={appTheme.TextPrimary}
         />
  </ScrollView>
         <TouchableOpacity 
@@ -182,78 +264,4 @@ const userId = await getOrCreateUserId();
    
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    padding: 20,
-  },
-  imageContainer: {
-    alignSelf: 'center',
-    marginBottom: 30,
-  },
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 2,
-    borderColor: '#ddd',
-  },
-  imagePlaceholder: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  placeholderText: {
-    color: '#888',
-  },
-  label: {
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    // marginTop: 20,
-    marginHorizontal:20,
-    marginBottom:20
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-   editIcon: {
-    position: 'absolute',
-    bottom: 30,
-    right: -6,
-    backgroundColor: '#4CAF50',
-    borderRadius: 20,
-    padding: 8,
-  },
-  imageWrapper: {
-  alignSelf: 'center',
-  marginBottom: 30,
-  position: 'relative',
-},
-});
-
 export default CreateProfile;

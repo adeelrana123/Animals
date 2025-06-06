@@ -20,7 +20,7 @@ const {appTheme}=useContext(AppDataContext);
   const styles = useMemo(()=>{
     return StyleSheet.create({
   container: { flex: 1,
-     backgroundColor: '#fff',
+     backgroundColor:appTheme.Background,
      },
   titles: {
     backgroundColor:appTheme.Primary,

@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { setProfile } from '../redux/profileSlice';
 import uuid from 'react-native-uuid';
+import { AppDataContext } from '../context/AppDataContext';
 
 export default function ProfileScreen({ navigation }) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [phone, setPhone] = useState('');
   const dispatch = useDispatch();
-
+ const { appTheme } = useContext(AppDataContext);
   const getOrCreateUserId = async () => {
     let userId = await AsyncStorage.getItem('userId');
     if (!userId) {
@@ -19,25 +20,52 @@ export default function ProfileScreen({ navigation }) {
     }
     return userId;
   };
+const styles = StyleSheet.create({
+  container: { padding: 20, backgroundColor:appTheme.Background, },
+  label: { marginBottom: 5,
+     fontWeight: 'bold',
+     color: appTheme.TextPrimary, },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 15,
+    borderRadius: 5,
 
-  const saveProfile = async () => {
-     if (name && location && phone) {
-    const userId = await getOrCreateUserId();  
-      // Alert.alert('Generated User ID', userId);
-    const profile = { id: userId, name, location, phone };
+  },
+});
+ const saveProfile = async () => {
+  const phoneRegex = /^03[0-9]{9}$/;         
+  const nameRegex = /^[A-Za-z ]+$/;         
 
-      try {
-        await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-        await AsyncStorage.setItem('isProfileCreated', 'true');
-        dispatch(setProfile(profile));
-        navigation.replace('Home');
-      } catch (error) {
-        Alert.alert('Error', 'Failed to save profile');
-      }
-    } else {
-      alert('Please fill all fields.');
-    }
-  };
+  if (!name || !location || !phone) {
+    Alert.alert('Missing Fields', 'Please fill all fields.');
+    return;
+  }
+
+  if (!nameRegex.test(name)) {
+    Alert.alert('Invalid Name', 'Name should only contain letters and spaces.');
+    return;
+  }
+
+  if (!phoneRegex.test(phone)) {
+    Alert.alert('Invalid Phone Number', 'Please enter a valid 11-digit phone number starting with 03.');
+    return;
+  }
+
+  const userId = await getOrCreateUserId();
+  const profile = { id: userId, name, location, phone };
+
+  try {
+    await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
+    await AsyncStorage.setItem('isProfileCreated', 'true');
+    dispatch(setProfile(profile));
+    navigation.replace('Home');
+  } catch (error) {
+    Alert.alert('Error', 'Failed to save profile');
+  }
+};
+
   useEffect(() => {
   const showId = async () => {
     const userId = await AsyncStorage.getItem('userId');
@@ -45,6 +73,7 @@ export default function ProfileScreen({ navigation }) {
   };
   showId();
 }, []);
+
 
 
   return (
@@ -55,6 +84,7 @@ export default function ProfileScreen({ navigation }) {
         value={name}
         onChangeText={setName}
         placeholder="Enter your name"
+        placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Address (City)</Text>
@@ -62,7 +92,8 @@ export default function ProfileScreen({ navigation }) {
         style={styles.input}
         value={location}
         onChangeText={setLocation}
-        placeholder="Enter your location"
+        placeholder="Enter your address (city)"
+         placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Text style={styles.label}>Phone Number</Text>
@@ -72,6 +103,7 @@ export default function ProfileScreen({ navigation }) {
         onChangeText={setPhone}
         keyboardType="phone-pad"
         placeholder="Enter phone number"
+         placeholderTextColor={appTheme.TextPrimary}
       />
 
       <Button title="Save Profile" onPress={saveProfile} />
@@ -79,14 +111,3 @@ export default function ProfileScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20 },
-  label: { marginBottom: 5, fontWeight: 'bold' },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-  },
-});

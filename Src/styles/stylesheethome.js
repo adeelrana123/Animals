@@ -5,9 +5,14 @@ import { StyleSheet } from 'react-native';
 const createStyles = (appTheme) => StyleSheet.create({
       container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor:appTheme.Background,
       },
       containers: {
+         flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+       paddingLeft: 15,
+       
         backgroundColor: appTheme.Primary,
       },
       heading: {
@@ -33,6 +38,14 @@ const createStyles = (appTheme) => StyleSheet.create({
         alignItems: 'center',
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
+        padding: 10,
+        backgroundColor: '#f9f9f9',
+      },
+       userProfileSections: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        // borderBottomWidth: 1,
+        // borderBottomColor: '#ddd',
         padding: 10,
         backgroundColor: '#f9f9f9',
       },
@@ -82,8 +95,8 @@ const createStyles = (appTheme) => StyleSheet.create({
       reactionContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginVertical: 10,
-        paddingHorizontal: 20,
+        marginTop: 5,
+        // paddingHorizontal: 10,
       },
       reactionText: {
         fontSize: 16,
@@ -129,6 +142,7 @@ const createStyles = (appTheme) => StyleSheet.create({
         color: 'white',
         fontSize: 16,
         lineHeight: 18,
+        textAlign: 'center',
       },
       modalTitle: {
         fontSize: 18,
@@ -198,6 +212,7 @@ const createStyles = (appTheme) => StyleSheet.create({
         padding: 10,
         backgroundColor: appTheme.Primary,
         borderRadius: 5,
+        
        
       },
       commentPostButtonText: {
@@ -346,14 +361,14 @@ adDescription: {
   },
   dropdownContainer: {
     position: 'absolute',
-    top: 120,
-    left: 20,
-    right: 20,
+    top: 115,
+    left: 10,
+    right: 10,
     backgroundColor: 'white',
     borderRadius: 5,
     elevation: 5,
     zIndex: 1000,
-    maxHeight: 200,
+    maxHeight: 260,
   },
   dropdownScroll: {
     padding: 10,
@@ -386,5 +401,42 @@ adDescription: {
     color: '#888',
     marginTop: 5,
   },
+
+ fullScreenImage: {
+    width: '100%',
+    height: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 30,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 10,
+  },
+  fullImageModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+   iconContainer: {
+        marginRight: 20,
+        height: 30,
+        width: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      btnContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+        backgroundColor: appTheme.Primary,
+        
+      },
     });
  export default createStyles;

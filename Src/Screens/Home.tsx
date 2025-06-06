@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View, Image, FlatList, Alert, ScrollView, Modal, TextInput, Keyboard } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Image, FlatList, Alert, ScrollView, Modal, TextInput, Keyboard, RefreshControl, Share } from 'react-native';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
@@ -7,7 +7,7 @@ import { RootState } from '../redux/store';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AppDataContext } from '../context/AppDataContext';
 import createStyles from '../styles/stylesheethome';
-// import Icon from 'react-native-vector-icons/MaterialIcons';
+import Entypo from 'react-native-vector-icons/Entypo'
 const Home = () => {
   const { appTheme } = useContext(AppDataContext);
   const styles = useMemo(() => createStyles(appTheme), [appTheme]);
@@ -19,6 +19,8 @@ const Home = () => {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
+  const [profileImageVisible, setProfileImageVisible] = useState(false);
+   const [selectedImage, setSelectedImage] = useState('');
   const [activeModal, setActiveModal] = useState<{
     postId: string | null;
     type: 'likes' | 'dislikes' | 'comments' | null;
@@ -36,6 +38,8 @@ const Home = () => {
     }>
   }>({});
   const [isPostingComment, setIsPostingComment] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // Added refreshing state
+
   const currentUserId = profile.id;
   const animalCategories = [
     { label: 'Cow', value: 'Cow' },
@@ -60,6 +64,34 @@ const Home = () => {
     { label: 'Other', value: 'Other' },
   ];
 
+  // Function to fetch ads data
+  const fetchAds = async () => {
+    try {
+      const snapshot = await firestore()
+        .collection('animalListings')
+        .orderBy('createdAt', 'desc')
+        .get();
+      
+      const adsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAds(adsData);
+      fetchCommentCounts(); // Refresh comment counts when ads are refreshed
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+      Alert.alert('Error', 'Failed to load ads');
+    } finally {
+      setRefreshing(false); // Stop refreshing indicator
+    }
+  };
+
+  // Function to handle refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAds();
+  };
+
   useEffect(() => {
     const unsubscribe = firestore()
       .collection('animalListings')
@@ -70,13 +102,14 @@ const Home = () => {
           ...doc.data(),
         }));
         setAds(adsData);
+        fetchCommentCounts(); // Refresh comment counts when ads are updated
       });
 
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const uniqueCategories = Array.from(new Set(ads.map(ad => ad.category).filter(Boolean)));
+    const uniqueCategories = Array.from(new Set(ads.map(ad => ad.category).filter(Boolean)))
     setCategories(uniqueCategories);
   }, [ads]);
 
@@ -222,10 +255,9 @@ const handleAddComment = async (postId: string) => {
         ...commentData,
         createdAt: firestore.FieldValue.serverTimestamp()
       });
-
     // Refresh comments to get server timestamp and actual ID
     await fetchComments(postId);
-    
+
     // Update count from server to ensure accuracy
     const commentsSnapshot = await firestore()
       .collection('animalListings')
@@ -289,40 +321,40 @@ const handleAddComment = async (postId: string) => {
     }
   };
 
-  const handleDislike = async (id: string) => {
-    const userId = profile.id;
-    const userName = profile.name;
-    const docRef = firestore().collection('animalListings').doc(id);
+  // const handleDislike = async (id: string) => {
+  //   const userId = profile.id;
+  //   const userName = profile.name;
+  //   const docRef = firestore().collection('animalListings').doc(id);
 
-    try {
-      const doc = await docRef.get();
-      if (!doc.exists) return;
+  //   try {
+  //     const doc = await docRef.get();
+  //     if (!doc.exists) return;
 
-      const data = doc.data();
-      const currentReaction = data?.reactions?.[userId];
+  //     const data = doc.data();
+  //     const currentReaction = data?.reactions?.[userId];
 
-      const updates: any = {};
+  //     const updates: any = {};
 
-      if (currentReaction === 'dislike') {
-        updates.dislikes = firestore.FieldValue.increment(-1);
-        updates[`reactions.${userId}`] = firestore.FieldValue.delete();
-        updates.dislikedUsers = firestore.FieldValue.arrayRemove(userName);
-      } else {
-        if (currentReaction === 'like') {
-          updates.likes = firestore.FieldValue.increment(-1);
-          updates.likedUsers = firestore.FieldValue.arrayRemove(userName);
-        }
-        updates.dislikes = firestore.FieldValue.increment(1);
-        updates[`reactions.${userId}`] = 'dislike';
-        updates.dislikedUsers = firestore.FieldValue.arrayUnion(userName);
-      }
+  //     if (currentReaction === 'dislike') {
+  //       updates.dislikes = firestore.FieldValue.increment(-1);
+  //       updates[`reactions.${userId}`] = firestore.FieldValue.delete();
+  //       updates.dislikedUsers = firestore.FieldValue.arrayRemove(userName);
+  //     } else {
+  //       if (currentReaction === 'like') {
+  //         updates.likes = firestore.FieldValue.increment(-1);
+  //         updates.likedUsers = firestore.FieldValue.arrayRemove(userName);
+  //       }
+  //       updates.dislikes = firestore.FieldValue.increment(1);
+  //       updates[`reactions.${userId}`] = 'dislike';
+  //       updates.dislikedUsers = firestore.FieldValue.arrayUnion(userName);
+  //     }
 
-      await docRef.update(updates);
-    } catch (error) {
-      console.error('Error updating dislike:', error);
-      Alert.alert('Error', 'Failed to update reaction');
-    }
-  };
+  //     await docRef.update(updates);
+  //   } catch (error) {
+  //     console.error('Error updating dislike:', error);
+  //     Alert.alert('Error', 'Failed to update reaction');
+  //   }
+  // };
 
   const deleteListing = async (id: string, ownerId: string) => {
     if (profile.id !== ownerId && !profile.isAdmin) {
@@ -421,7 +453,7 @@ const handleAddComment = async (postId: string) => {
       return updated;
     });
     
-    // Update count after deletion
+  
     setCommentCounts(prev => ({
       ...prev,
       [postId]: Math.max(0, (prev[postId] || 0) - 1)
@@ -436,28 +468,46 @@ const handleAddComment = async (postId: string) => {
     const isMyAd = item.ownerId === profile.id;
     const displayName = isMyAd ? profile.name : item.ownerName;
     const displayId = isMyAd ? profile.id : item.ownerId;
-
+    const openFullScreenImage = (imageUri: string) => {
+    setSelectedImage(imageUri);
+    setProfileImageVisible(true);
+  };
+  const navigateToUserAds = () => {
+    navigation.navigate('UserAds', { 
+      ownerId: item.ownerId,
+       ownerName: item.ownerName ,
+       ownerImage: item.ownerImage,
+    });
+  }
     return (
       <View style={styles.topcontainer}>
         <View style={styles.userProfileSection}>
-          {item.ownerImage ? (
-            <Image
-              source={{ uri: item.ownerImage }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.profileImage, styles.emptyProfileImage]}>
-              <Icon name="person" size={50} color="#777" />
-            </View>
-          )}
+        <View style={styles.userProfileSections}>
+  {item.ownerImage ? (
+     <TouchableOpacity onPress={() => openFullScreenImage(item.ownerImage)}>
+      <Image
+        source={{ uri: item.ownerImage }}
+        style={styles.profileImage}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  ) : (
+    <View style={[styles.profileImage, styles.emptyProfileImage]}>
+      <Icon name="person" size={50} color="#777" />
+    </View>
+  )}
+</View>
+
           <View style={styles.userInfo}>
+           <TouchableOpacity onPress={navigateToUserAds}>
             <Text style={styles.userName}>{displayName || 'Unknown'}</Text>
+         
             {item.createdAt && (
               <Text style={styles.userDate}>
                 {formatDate(item.createdAt.toDate())}
               </Text>
             )}
+             </TouchableOpacity>
           </View>
           {(isMyAd || profile.isAdmin) && (
             <TouchableOpacity style={{ marginBottom: 15 }} onPress={() => deleteListing(item.id, displayId)}>
@@ -465,6 +515,27 @@ const handleAddComment = async (postId: string) => {
             </TouchableOpacity>
           )}
         </View>
+        <Modal
+        visible={profileImageVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setProfileImageVisible(false)}
+      >
+        <View style={styles.fullImageModalContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setProfileImageVisible(false)}
+          >
+            <Icon name="close" size={30} color="black" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.fullScreenImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
+
 
         <TouchableOpacity onPress={() => navigation.navigate('Detaile', { item })}>
           <View style={styles.profileCard}>
@@ -491,16 +562,20 @@ const handleAddComment = async (postId: string) => {
             <View style={styles.container}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 {item.likedUsers?.length > 0 && (
-                  <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'likes' })}>
-                    <Text style={{ fontWeight: 'bold', color: 'green' }}>
-                      {item.likedUsers.length === 1
-                        ? item.likedUsers[0]
-                        : `${item.likedUsers[0]} and ${item.likedUsers.length - 1} others`}
-                    </Text>
-                  </TouchableOpacity>
-                )}
+  <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'likes' })}>
+    <Text style={{ fontWeight: 'bold', color: 'green' }}>
+      {item.likedUsers.includes(profile.name)
+        ? item.likedUsers.length === 1
+          ? "You"
+          : `You and ${item.likedUsers.length - 1} other${item.likedUsers.length > 2 ? 's' : ''}`
+        : item.likedUsers.length === 1
+          ? item.likedUsers[0]
+          : `${item.likedUsers[0]} and ${item.likedUsers.length - 1} other${item.likedUsers.length > 2 ? 's' : ''}`}
+    </Text>
+  </TouchableOpacity>
+)}
 
-                {item.dislikedUsers?.length > 0 && (
+                {/* {item.dislikedUsers?.length > 0 && (
                   <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'dislikes' })} style={{ flex: 1, alignItems: 'flex-end' }}>
                     <Text style={{ fontWeight: 'bold', color: 'red', textAlign: 'right' }}>
                       {item.dislikedUsers.length === 1
@@ -508,7 +583,7 @@ const handleAddComment = async (postId: string) => {
                         : `${item.dislikedUsers[0]} and ${item.dislikedUsers.length - 1} others`}
                     </Text>
                   </TouchableOpacity>
-                )}
+                )} */}
               </View>
 
               <Modal
@@ -532,7 +607,7 @@ const handleAddComment = async (postId: string) => {
                 </View>
               </Modal>
 
-              <Modal
+              {/* <Modal
                 visible={activeModal.postId === item.id && activeModal.type === 'dislikes'}
                 transparent={true}
                 animationType="fade"
@@ -551,23 +626,23 @@ const handleAddComment = async (postId: string) => {
                     </ScrollView>
                   </View>
                 </View>
-              </Modal>
+              </Modal> */}
             </View>
 
             <View style={styles.reactionContainer}>
               <TouchableOpacity onPress={() => handleLike(item.id)}>
-                <Text style={styles.reactionText}>👍 {item.likedUsers.length|| 0}</Text>
+                <Text style={styles.reactionText}>❤️ Like ({item.likedUsers.length|| 0})</Text>
               </TouchableOpacity>
                <TouchableOpacity onPress={() => handleOpenComments(item.id)}>
   <Text style={styles.reactionText}>
-    💬 {commentCounts[item.id] !== undefined ? commentCounts[item.id] : '...'}
+    💬 Comment({commentCounts[item.id] !== undefined ? commentCounts[item.id] : '...'})
   </Text>
 </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleDislike(item.id)}>
+              {/* <TouchableOpacity onPress={() => handleDislike(item.id)}>
                 <Text style={styles.reactionText}>👎 {item.dislikedUsers.length || 0}</Text>
               </TouchableOpacity>
-             
+              */}
             </View>
 
             <Modal
@@ -596,7 +671,12 @@ const handleAddComment = async (postId: string) => {
                     />
                     <TouchableOpacity
                       style={styles.commentPostButton}
-                      onPress={() => handleAddComment(item.id)}
+                    
+                onPress={() => {
+ 
+  handleAddComment(item.id);
+}}
+                      
                       disabled={isPostingComment || !commentText.trim()}
                     >
                       <Text style={styles.commentPostButtonText}>
@@ -644,11 +724,31 @@ const handleAddComment = async (postId: string) => {
     );
   };
 
-
+const shareText =()=>{
+  Share.share({
+    message:"https://play.google.com/store/apps/details?id=com.solarcalculate"
+  })
+}
   return (
     <View style={styles.container}>
       <View style={styles.containers}>
-        <Text style={styles.heading}>Welcome {profile.name || ''}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          {profile.image ? (
+            <Image source={{ uri: profile.image }} style={styles.profileImage} />
+          ) : (
+            <View style={[styles.profileImage, styles.emptyProfileImage]}>
+              <Icon name="person" size={50} color="#777" />
+            </View>
+          )}
+        </TouchableOpacity>
+       <Text style={styles.heading}>
+  {profile.name ? (profile.name.length > 15 ? profile.name.substring(0, 15) + '...' : profile.name) : ''}
+</Text>  
+         <View style={styles.btnContainer}>
+       <TouchableOpacity style={styles.iconContainer} onPress={shareText}>
+          <Entypo name="share" size={30} color={"white"} />
+        </TouchableOpacity>
+      </View>
       </View>
       <View style={styles.searchContainer}>
         <View style={styles.searchIconContainer}>
@@ -660,6 +760,7 @@ const handleAddComment = async (postId: string) => {
           placeholder="Select Animal name..."
           value={searchQuery}
           onChangeText={setSearchQuery}
+          placeholderTextColor={appTheme.TextPrimary}
         />
 
         <TouchableOpacity
@@ -679,7 +780,9 @@ const handleAddComment = async (postId: string) => {
                 style={styles.dropdownItem}
                 onPress={() => handleCategorySelect(item.value)}
               >
-                <Text style={styles.dropdownItemText}>{item.label}</Text>
+                <Text style={styles.dropdownItemText}>{item.label}
+
+                </Text>
               </TouchableOpacity>
             )}
             ListHeaderComponent={
@@ -699,14 +802,22 @@ const handleAddComment = async (postId: string) => {
         <View style={styles.emptyContainer}>
 
           <Text style={styles.emptyText}>No animals found</Text>
-          <Text style={styles.emptySubText}>Try a different search term</Text>
+          <Text style={styles.emptySubText}>Try a different search term </Text>
         </View>
       ) : (
-        <FlatList
+         <FlatList
           data={searchQuery ? filteredAds : ads}
           renderItem={renderListingCard}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#9Bd35A', '#689F38']} 
+              tintColor="#689F38" 
+            />
+          }
         />
       )}
 
