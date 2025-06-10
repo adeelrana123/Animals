@@ -77,7 +77,7 @@ const Home = () => {
         ...doc.data(),
       }));
       setAds(adsData);
-      fetchCommentCounts(); // Refresh comment counts when ads are refreshed
+      fetchCommentCounts(); 
     } catch (error) {
       console.error('Error fetching ads:', error);
       Alert.alert('Error', 'Failed to load ads');
@@ -102,7 +102,7 @@ const Home = () => {
           ...doc.data(),
         }));
         setAds(adsData);
-        fetchCommentCounts(); // Refresh comment counts when ads are updated
+        fetchCommentCounts(); 
       });
 
     return () => unsubscribe();
@@ -157,8 +157,6 @@ const Home = () => {
     return `${diffInYears} year${diffInYears !== 1 ? 's' : ''} ago`;
   }
 };
-
-
   const fetchComments = async (postId: string) => {
     try {
       const commentsSnapshot = await firestore()
@@ -313,48 +311,12 @@ const handleAddComment = async (postId: string) => {
         updates[`reactions.${userId}`] = 'like';
         updates.likedUsers = firestore.FieldValue.arrayUnion(userName);
       }
-
       await docRef.update(updates);
     } catch (error) {
       console.error('Error updating like:', error);
       Alert.alert('Error', 'Failed to update reaction');
     }
   };
-
-  // const handleDislike = async (id: string) => {
-  //   const userId = profile.id;
-  //   const userName = profile.name;
-  //   const docRef = firestore().collection('animalListings').doc(id);
-
-  //   try {
-  //     const doc = await docRef.get();
-  //     if (!doc.exists) return;
-
-  //     const data = doc.data();
-  //     const currentReaction = data?.reactions?.[userId];
-
-  //     const updates: any = {};
-
-  //     if (currentReaction === 'dislike') {
-  //       updates.dislikes = firestore.FieldValue.increment(-1);
-  //       updates[`reactions.${userId}`] = firestore.FieldValue.delete();
-  //       updates.dislikedUsers = firestore.FieldValue.arrayRemove(userName);
-  //     } else {
-  //       if (currentReaction === 'like') {
-  //         updates.likes = firestore.FieldValue.increment(-1);
-  //         updates.likedUsers = firestore.FieldValue.arrayRemove(userName);
-  //       }
-  //       updates.dislikes = firestore.FieldValue.increment(1);
-  //       updates[`reactions.${userId}`] = 'dislike';
-  //       updates.dislikedUsers = firestore.FieldValue.arrayUnion(userName);
-  //     }
-
-  //     await docRef.update(updates);
-  //   } catch (error) {
-  //     console.error('Error updating dislike:', error);
-  //     Alert.alert('Error', 'Failed to update reaction');
-  //   }
-  // };
 
   const deleteListing = async (id: string, ownerId: string) => {
     if (profile.id !== ownerId && !profile.isAdmin) {
@@ -405,7 +367,6 @@ const handleAddComment = async (postId: string) => {
       console.log('Error updating listings:', err);
     }
   };
-
   useEffect(() => {
     if (profile.id && profile.image) {
       updateUserProfileImageInListings(profile.id, profile.image);
@@ -437,7 +398,6 @@ const handleAddComment = async (postId: string) => {
       { cancelable: true }
     );
   };
-
  const handleDeleteComment = async (postId: string, commentId: string) => {
   try {
     await firestore()
@@ -452,8 +412,6 @@ const handleAddComment = async (postId: string) => {
       updated[postId] = updated[postId].filter(c => c.id !== commentId);
       return updated;
     });
-    
-  
     setCommentCounts(prev => ({
       ...prev,
       [postId]: Math.max(0, (prev[postId] || 0) - 1)
@@ -463,7 +421,6 @@ const handleAddComment = async (postId: string) => {
     Alert.alert('Error', 'Failed to delete comment');
   }
 };
-
   const renderListingCard = ({ item }: any) => {
     const isMyAd = item.ownerId === profile.id;
     const displayName = isMyAd ? profile.name : item.ownerName;
@@ -497,7 +454,6 @@ const handleAddComment = async (postId: string) => {
     </View>
   )}
 </View>
-
           <View style={styles.userInfo}>
            <TouchableOpacity onPress={navigateToUserAds}>
             <Text style={styles.userName}>{displayName || 'Unknown'}</Text>
@@ -535,8 +491,6 @@ const handleAddComment = async (postId: string) => {
           />
         </View>
       </Modal>
-
-
         <TouchableOpacity onPress={() => navigation.navigate('Detaile', { item })}>
           <View style={styles.profileCard}>
             {item.images?.length > 0 && (
@@ -575,15 +529,6 @@ const handleAddComment = async (postId: string) => {
   </TouchableOpacity>
 )}
 
-                {/* {item.dislikedUsers?.length > 0 && (
-                  <TouchableOpacity onPress={() => setActiveModal({ postId: item.id, type: 'dislikes' })} style={{ flex: 1, alignItems: 'flex-end' }}>
-                    <Text style={{ fontWeight: 'bold', color: 'red', textAlign: 'right' }}>
-                      {item.dislikedUsers.length === 1
-                        ? item.dislikedUsers[0]
-                        : `${item.dislikedUsers[0]} and ${item.dislikedUsers.length - 1} others`}
-                    </Text>
-                  </TouchableOpacity>
-                )} */}
               </View>
 
               <Modal
@@ -607,26 +552,6 @@ const handleAddComment = async (postId: string) => {
                 </View>
               </Modal>
 
-              {/* <Modal
-                visible={activeModal.postId === item.id && activeModal.type === 'dislikes'}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setActiveModal({ postId: null, type: null })}
-              >
-                <View style={styles.modalContainer}>
-                  <View style={styles.modalContent}>
-                    <TouchableOpacity onPress={() => setActiveModal({ postId: null, type: null })} style={styles.removeButton}>
-                      <Text style={styles.removeButtonText}>✖</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.modalTitle}>Disliked by</Text>
-                    <ScrollView style={styles.scrollContainer}>
-                      {(Array.isArray(item.dislikedUsers) ? item.dislikedUsers : []).map((user: string, index: number) => (
-                        <Text key={index} style={styles.userText}>{user}</Text>
-                      ))}
-                    </ScrollView>
-                  </View>
-                </View>
-              </Modal> */}
             </View>
 
             <View style={styles.reactionContainer}>
@@ -639,10 +564,6 @@ const handleAddComment = async (postId: string) => {
   </Text>
 </TouchableOpacity>
 
-              {/* <TouchableOpacity onPress={() => handleDislike(item.id)}>
-                <Text style={styles.reactionText}>👎 {item.dislikedUsers.length || 0}</Text>
-              </TouchableOpacity>
-              */}
             </View>
 
             <Modal

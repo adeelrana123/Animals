@@ -401,13 +401,7 @@ removeButtonText: {
     }}
     zIndex={1000}
     zIndexInverse={1000}
-     
-  //    ArrowDownIconComponent={({ style }) => (
-  //   <AntDesign name="down" size={20} style={style} color="black" />
-  // )}
-  // ArrowUpIconComponent={({ style }) => (
-  //   <AntDesign name="up" size={20} style={style} color="black" />
-  // )}
+
   />
 </View>
       <Text style={styles.label}>Gender</Text>
@@ -430,7 +424,7 @@ removeButtonText: {
         style={styles.input}
         value={age}
         onChangeText={setAge}
-        keyboardType="numeric"
+        // keyboardType="numeric"
         placeholder="Enter age"
         placeholderTextColor={appTheme.TextPrimary}
       />
